@@ -9,6 +9,7 @@ import NovaAvaliacao from './pages/Professor/Avaliacoes/NovaAvaliacao';
 import EditarAvaliacao from './pages/Professor/Avaliacoes/EditarAvaliacao';
 import Questoes from './pages/Professor/Questoes/Questoes';
 import CadastroQuestao from './pages/Professor/Questoes/CadastroQuestao';
+import IAvalia from './pages/Professor/IAvalia/IAvalia';
 import Professores from './pages/Admin/Professores/Professores';
 import QuestoesAdmin from './pages/Admin/Questoes/Questoes';
 import Materias from './pages/Admin/Materias/Materias';
@@ -77,6 +78,14 @@ function App() {
             element={
               <ProtectedRoute requiredRole="PROFESSOR">
                 <CadastroQuestao />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/professor/iavalia" 
+            element={
+              <ProtectedRoute requiredRole="PROFESSOR">
+                <IAvalia />
               </ProtectedRoute>
             } 
           />

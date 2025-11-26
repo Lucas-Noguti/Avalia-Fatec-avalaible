@@ -33,6 +33,9 @@ const Navbar = () => {
               <Link to="/professor/questoes" className="navbar-link">
                 <i className="fas fa-question-circle"></i> Cadastro de Questões
               </Link>
+              <Link to="/professor/iavalia" className="navbar-link navbar-link-iavalia">
+                <i className="fas fa-robot"></i> IAvalia
+              </Link>
             </>
           )}
 
