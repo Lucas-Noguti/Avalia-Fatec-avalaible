@@ -95,16 +95,6 @@ const Questoes = () => {
                     </div>
                   )}
                 </div>
-
-                <div className="questao-card-actions">
-                  <button 
-                    className="btn-icon"
-                    onClick={() => navigate(`/professor/questoes/editar/${questao.id}`)}
-                    title="Editar"
-                  >
-                    <i className="fas fa-edit"></i> Editar
-                  </button>
-                </div>
               </div>
             ))}
           </div>

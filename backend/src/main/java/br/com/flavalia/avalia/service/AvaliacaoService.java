@@ -29,6 +29,10 @@ public class AvaliacaoService {
         return avaliacaoRepository.findByProfessorId(professorId);
     }
     
+    public List<Avaliacao> listarTodas() {
+        return avaliacaoRepository.findAll();
+    }
+    
     public Avaliacao buscarPorId(Long id) {
         return avaliacaoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Avaliação não encontrada"));
@@ -40,8 +44,13 @@ public class AvaliacaoService {
             throw new RuntimeException("Selecione ao menos uma questão");
         }
         
-        Usuario professor = usuarioRepository.findById(professorId)
-                .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
+        Usuario professor = null;
+        // Se professorId não é null, buscar o professor (criação por professor)
+        // Se professorId é null, não precisa de professor (criação por admin)
+        if (professorId != null) {
+            professor = usuarioRepository.findById(professorId)
+                    .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
+        }
         
         List<Questao> questoes = questaoRepository.findAllById(request.getQuestoesIds());
         
@@ -52,6 +61,7 @@ public class AvaliacaoService {
         Avaliacao avaliacao = new Avaliacao();
         avaliacao.setTitulo(request.getTitulo());
         avaliacao.setTurma(request.getTurma());
+        avaliacao.setNomeFaculdade(request.getNomeFaculdade());
         avaliacao.setProfessor(professor);
         avaliacao.setQuestoes(questoes);
         
@@ -88,10 +98,17 @@ public class AvaliacaoService {
     public void deletarAvaliacao(Long id, Long professorId) {
         Avaliacao avaliacao = buscarPorId(id);
         
-        if (!avaliacao.getProfessor().getId().equals(professorId)) {
+        // Se professorId não é null, verificar permissão (professor deletando)
+        // Se professorId é null, permitir (admin deletando)
+        if (professorId != null && avaliacao.getProfessor() != null && 
+            !avaliacao.getProfessor().getId().equals(professorId)) {
             throw new RuntimeException("Você não tem permissão para deletar esta avaliação");
         }
         
+        avaliacaoRepository.deleteById(id);
+    }
+    
+    public void deletarAvaliacao(Long id) {
         avaliacaoRepository.deleteById(id);
     }
 }

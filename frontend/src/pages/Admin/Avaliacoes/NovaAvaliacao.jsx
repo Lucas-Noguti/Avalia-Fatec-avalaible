@@ -7,7 +7,9 @@ import './NovaAvaliacao.css';
 const NovaAvaliacao = () => {
   const navigate = useNavigate();
   const [questoes, setQuestoes] = useState([]);
+  const [materias, setMaterias] = useState([]);
   const [questoesSelecionadas, setQuestoesSelecionadas] = useState([]);
+  const [filtroMateria, setFiltroMateria] = useState('');
   const [avaliacao, setAvaliacao] = useState({
     titulo: '',
     turma: '',
@@ -17,15 +19,19 @@ const NovaAvaliacao = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    carregarQuestoes();
+    carregarDados();
   }, []);
 
-  const carregarQuestoes = async () => {
+  const carregarDados = async () => {
     try {
-      const response = await api.get('/professor/questoes');
-      setQuestoes(response.data);
+      const [questoesRes, materiasRes] = await Promise.all([
+        api.get('/admin/questoes'),
+        api.get('/admin/materias')
+      ]);
+      setQuestoes(questoesRes.data);
+      setMaterias(materiasRes.data);
     } catch (error) {
-      console.error('Erro ao carregar questões:', error);
+      console.error('Erro ao carregar dados:', error);
     }
   };
 
@@ -36,7 +42,6 @@ const NovaAvaliacao = () => {
     });
   };
 
-
   const toggleQuestao = (id) => {
     if (questoesSelecionadas.includes(id)) {
       setQuestoesSelecionadas(questoesSelecionadas.filter((qId) => qId !== id));
@@ -44,6 +49,11 @@ const NovaAvaliacao = () => {
       setQuestoesSelecionadas([...questoesSelecionadas, id]);
     }
   };
+
+  const questoesFiltradas = questoes.filter((questao) => {
+    if (!filtroMateria) return true;
+    return questao.materia === filtroMateria;
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -57,12 +67,14 @@ const NovaAvaliacao = () => {
     setLoading(true);
 
     try {
-      await api.post('/professor/avaliacoes', {
+      await api.post('/admin/avaliacoes', {
         ...avaliacao,
         questoesIds: questoesSelecionadas,
       });
-      navigate('/professor/avaliacoes');
+      alert('Avaliação criada com sucesso!');
+      navigate('/admin/avaliacoes');
     } catch (err) {
+      console.error('Erro ao criar avaliação:', err);
       setError('Erro ao criar avaliação. Tente novamente.');
     } finally {
       setLoading(false);
@@ -77,19 +89,18 @@ const NovaAvaliacao = () => {
           <h1>Criar Nova Avaliação</h1>
           <button 
             className="btn btn-secondary"
-            onClick={() => navigate('/professor/avaliacoes')}
-            aria-label="Voltar para lista de avaliações"
+            onClick={() => navigate('/admin/avaliacoes')}
           >
-            <i className="fas fa-arrow-left" aria-hidden="true"></i> Voltar
+            <i className="fas fa-arrow-left"></i> Voltar
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="avaliacao-form">
           <div className="avaliacao-info-card card">
-            <h2>Informações da Avaliação</h2>
+            <h3>Informações da Avaliação</h3>
             
             {error && (
-              <div className="form-error" role="alert" aria-live="polite">
+              <div className="form-error">
                 {error}
               </div>
             )}
@@ -105,7 +116,6 @@ const NovaAvaliacao = () => {
                 onChange={handleChange}
                 placeholder="Ex: Cálculo I - Prova Final"
                 required
-                aria-required="true"
               />
             </div>
 
@@ -138,47 +148,47 @@ const NovaAvaliacao = () => {
 
           <div className="questoes-selecao-card card">
             <div className="questoes-selecao-header">
-              <h2>Selecionar Questões</h2>
-              <span className="questoes-count" aria-live="polite">
+              <h3>Selecionar Questões</h3>
+              <span className="questoes-count">
                 {questoesSelecionadas.length} {questoesSelecionadas.length === 1 ? 'questão selecionada' : 'questões selecionadas'}
               </span>
             </div>
 
-            {questoes.length === 0 ? (
+            <div className="filtro-materia">
+              <label htmlFor="filtroMateria">
+                <i className="fas fa-filter"></i> Filtrar por Matéria
+              </label>
+              <select
+                id="filtroMateria"
+                className="input"
+                value={filtroMateria}
+                onChange={(e) => setFiltroMateria(e.target.value)}
+              >
+                <option value="">Todas as matérias</option>
+                {materias.map((mat) => (
+                  <option key={mat.id} value={mat.nome}>
+                    {mat.nome}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {questoesFiltradas.length === 0 ? (
               <div className="questoes-empty-state">
-                <p>Você ainda não tem questões cadastradas.</p>
-                <button 
-                  type="button"
-                  className="btn btn-secondary"
-                  onClick={() => navigate('/professor/questoes/nova')}
-                >
-                  Cadastrar Questão
-                </button>
+                <p>Nenhuma questão encontrada.</p>
               </div>
             ) : (
               <div className="questoes-selecao-list">
-                {questoes.map((questao) => (
+                {questoesFiltradas.map((questao) => (
                   <div 
                     key={questao.id} 
                     className={`questao-selecao-item ${questoesSelecionadas.includes(questao.id) ? 'selecionada' : ''}`}
-                    onClick={() => toggleQuestao(questao.id)}
-                    role="checkbox"
-                    aria-checked={questoesSelecionadas.includes(questao.id)}
-                    tabIndex={0}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        toggleQuestao(questao.id);
-                      }
-                    }}
                   >
                     <input
                       type="checkbox"
-                      checked={questoesSelecionadas.includes(questao.id)}
-                      onChange={() => {}}
                       className="questao-checkbox"
-                      aria-label={`Selecionar questão: ${questao.enunciado}`}
-                      tabIndex={-1}
+                      checked={questoesSelecionadas.includes(questao.id)}
+                      onChange={() => toggleQuestao(questao.id)}
                     />
                     <div className="questao-selecao-content">
                       <div className="questao-selecao-badges">
@@ -186,8 +196,17 @@ const NovaAvaliacao = () => {
                         {questao.topico && (
                           <span className="badge badge-topico">{questao.topico}</span>
                         )}
+                        <span className={`badge badge-${questao.nivelDificuldade?.toLowerCase()}`}>
+                          {questao.nivelDificuldade}
+                        </span>
+                        <span className="badge badge-pontos">{questao.pontuacao} pts</span>
                       </div>
                       <p className="questao-selecao-enunciado">{questao.enunciado}</p>
+                      {questao.professor && (
+                        <small className="questao-professor-info">
+                          <i className="fas fa-user"></i> {questao.professor.nome}
+                        </small>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -196,18 +215,17 @@ const NovaAvaliacao = () => {
           </div>
 
           <div className="form-actions">
-            <button
-              type="button"
+            <button 
+              type="button" 
               className="btn btn-secondary"
-              onClick={() => navigate('/professor/avaliacoes')}
+              onClick={() => navigate('/admin/avaliacoes')}
             >
               Cancelar
             </button>
-            <button
-              type="submit"
+            <button 
+              type="submit" 
               className="btn btn-primary"
-              disabled={loading || questoesSelecionadas.length === 0}
-              aria-busy={loading}
+              disabled={loading}
             >
               {loading ? 'Criando...' : 'Criar Avaliação'}
             </button>

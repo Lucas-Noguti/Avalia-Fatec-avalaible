@@ -44,7 +44,7 @@ const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <h1 className="login-logo">FLAVALIA</h1>
-          <p className="login-subtitle">Sistema de Avaliações FATEC</p>
+          <p className="login-subtitle">Sistema de Avaliações</p>
         </div>
 
         {error && (
@@ -98,7 +98,7 @@ const Login = () => {
         </form>
 
         <div className="login-footer">
-          <p>Desenvolvido para FATEC</p>
+          <p>Desenvolvido por: Grupo Flamengo</p>
         </div>
       </div>
     </div>

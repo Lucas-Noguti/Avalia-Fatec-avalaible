@@ -124,6 +124,7 @@ public class QuestaoService {
         return questaoRepository.save(questao);
     }
     
+    @Transactional
     public void deletarQuestao(Long id, Long professorId) {
         Questao questao = buscarPorId(id);
         
@@ -132,6 +133,10 @@ public class QuestaoService {
             throw new RuntimeException("Você não tem permissão para deletar esta questão");
         }
         
-        questaoRepository.deleteById(id);
+        try {
+            questaoRepository.deleteById(id);
+        } catch (Exception e) {
+            throw new RuntimeException("Não é possível deletar esta questão pois ela está sendo usada em avaliações ativas.");
+        }
     }
 }

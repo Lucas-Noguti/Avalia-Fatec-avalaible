@@ -50,6 +50,9 @@ const Navbar = () => {
               <Link to="/admin/questoes" className="navbar-link">
                 <i className="fas fa-question-circle"></i> Questões
               </Link>
+              <Link to="/admin/avaliacoes" className="navbar-link">
+                <i className="fas fa-clipboard-list"></i> Avaliações
+              </Link>
             </>
           )}
 

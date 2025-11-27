@@ -5,8 +5,6 @@ import br.com.flavalia.avalia.model.Avaliacao;
 import br.com.flavalia.avalia.model.Questao;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.PdfWriter;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfPCell;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;

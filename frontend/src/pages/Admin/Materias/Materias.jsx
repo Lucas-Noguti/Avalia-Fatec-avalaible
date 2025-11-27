@@ -3,6 +3,8 @@ import Navbar from '../../../components/Navbar/Navbar';
 import api from '../../../services/api';
 import './Materias.css';
 
+const MAX_DESCRICAO = 50;
+
 const Materias = () => {
   const [materias, setMaterias] = useState([]);
   const [professores, setProfessores] = useState([]);
@@ -31,16 +33,40 @@ const Materias = () => {
       setProfessores(professoresRes.data);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      mostrarAlerta('Erro ao carregar dados. Tente novamente.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
+  const mostrarAlerta = (mensagem, tipo = 'success') => {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `custom-alert alert-${tipo}`;
+    alertDiv.innerHTML = `
+      <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${mensagem}</span>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => alertDiv.classList.add('show'), 10);
+    setTimeout(() => {
+      alertDiv.classList.remove('show');
+      setTimeout(() => alertDiv.remove(), 300);
+    }, 3000);
+  };
+
   const handleChange = (e) => {
-    const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
+    const { name, type, checked, value } = e.target;
+    let newValue = type === 'checkbox' ? checked : value;
+    
+    // Limitar descrição
+    if (name === 'descricao' && newValue.length > MAX_DESCRICAO) {
+      return;
+    }
+    
     setMateria({
       ...materia,
-      [e.target.name]: value,
+      [name]: newValue,
     });
   };
 
@@ -71,28 +97,59 @@ const Materias = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!materia.nome.trim()) {
+      mostrarAlerta('O nome da matéria é obrigatório!', 'error');
+      return;
+    }
+
     try {
       if (editando) {
         await api.put(`/admin/materias/${editando}`, materia);
+        mostrarAlerta('Matéria atualizada com sucesso!', 'success');
       } else {
         await api.post('/admin/materias', materia);
+        mostrarAlerta('Matéria criada com sucesso!', 'success');
       }
       carregarDados();
       fecharModal();
     } catch (error) {
       console.error('Erro ao salvar matéria:', error);
-      alert('Erro ao salvar matéria');
+      const mensagem = error.response?.data?.message || 'Erro ao salvar matéria. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
   const handleDeletar = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar esta matéria?')) {
+    const materia = materias.find(m => m.id === id);
+    const professoresAssociados = getProfessoresAssociados(materia);
+    
+    // Verificar se há professores associados
+    if (professoresAssociados.length > 0) {
+      const nomesProfessores = professoresAssociados.map(p => p.nome).join(', ');
+      mostrarAlerta(
+        `Não é possível deletar a matéria "${materia?.nome}" pois ela possui ${professoresAssociados.length} professor(es) associado(s): ${nomesProfessores}. Remova as associações primeiro.`,
+        'error'
+      );
+      return;
+    }
+    
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja deletar a matéria "${materia?.nome}"?\n\n` +
+      `Esta ação não pode ser desfeita.`
+    );
+    
+    if (confirmacao) {
       try {
         await api.delete(`/admin/materias/${id}`);
+        mostrarAlerta('Matéria deletada com sucesso!', 'success');
         carregarDados();
       } catch (error) {
         console.error('Erro ao deletar matéria:', error);
-        alert('Erro ao deletar matéria');
+        const mensagem = error.response?.data?.message || 
+          error.response?.status === 409 ? 
+          'Não é possível deletar esta matéria. Ela pode estar sendo usada em questões ou avaliações.' :
+          'Erro ao deletar matéria. Tente novamente.';
+        mostrarAlerta(mensagem, 'error');
       }
     }
   };
@@ -110,20 +167,24 @@ const Materias = () => {
   const handleAssociar = async (professorId) => {
     try {
       await api.post(`/admin/materias/${materiaAtual.id}/professores/${professorId}`);
+      mostrarAlerta('Professor associado com sucesso!', 'success');
       carregarDados();
     } catch (error) {
       console.error('Erro ao associar professor:', error);
-      alert('Erro ao associar professor');
+      const mensagem = error.response?.data?.message || 'Erro ao associar professor. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
   const handleDesassociar = async (professorId) => {
     try {
       await api.delete(`/admin/materias/${materiaAtual.id}/professores/${professorId}`);
+      mostrarAlerta('Professor desassociado com sucesso!', 'success');
       carregarDados();
     } catch (error) {
       console.error('Erro ao desassociar professor:', error);
-      alert('Erro ao desassociar professor');
+      const mensagem = error.response?.data?.message || 'Erro ao desassociar professor. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
@@ -239,7 +300,12 @@ const Materias = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="descricao">Descrição</label>
+                  <label htmlFor="descricao">
+                    Descrição
+                    <span className="char-counter">
+                      {materia.descricao.length}/{MAX_DESCRICAO}
+                    </span>
+                  </label>
                   <textarea
                     id="descricao"
                     name="descricao"
@@ -247,7 +313,17 @@ const Materias = () => {
                     rows="3"
                     value={materia.descricao}
                     onChange={handleChange}
+                    maxLength={MAX_DESCRICAO}
+                    placeholder="Descreva a matéria (opcional)"
                   />
+                  {materia.descricao.length >= MAX_DESCRICAO - 20 && (
+                    <small className="char-warning">
+                      <i className="fas fa-exclamation-triangle"></i>
+                      {materia.descricao.length >= MAX_DESCRICAO 
+                        ? ' Limite máximo atingido!' 
+                        : ` Restam ${MAX_DESCRICAO - materia.descricao.length} caracteres`}
+                    </small>
+                  )}
                 </div>
 
                 <div className="form-group-checkbox">

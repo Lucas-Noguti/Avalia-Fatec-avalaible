@@ -13,6 +13,9 @@ import IAvalia from './pages/Professor/IAvalia/IAvalia';
 import Professores from './pages/Admin/Professores/Professores';
 import QuestoesAdmin from './pages/Admin/Questoes/Questoes';
 import Materias from './pages/Admin/Materias/Materias';
+import AvaliacoesAdmin from './pages/Admin/Avaliacoes/Avaliacoes';
+import NovaAvaliacaoAdmin from './pages/Admin/Avaliacoes/NovaAvaliacao';
+import VisualizarAvaliacaoAdmin from './pages/Admin/Avaliacoes/VisualizarAvaliacao';
 
 // Componente para redirecionar usuários autenticados da página de login
 const LoginRoute = ({ children }) => {
@@ -112,6 +115,30 @@ function App() {
             element={
               <ProtectedRoute requiredRole="ADMIN">
                 <Materias />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/avaliacoes" 
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <AvaliacoesAdmin />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/avaliacoes/nova" 
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <NovaAvaliacaoAdmin />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/avaliacoes/:id" 
+            element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <VisualizarAvaliacaoAdmin />
               </ProtectedRoute>
             } 
           />

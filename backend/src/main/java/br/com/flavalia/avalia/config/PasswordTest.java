@@ -1,20 +1,26 @@
 package br.com.flavalia.avalia.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
-@Component
-@Order(2)
+/**
+ * ATENÇÃO: Este arquivo é apenas para testes em desenvolvimento
+ * Remova ou desabilite em produção por questões de segurança
+ * 
+ * Para habilitar, descomente as anotações @Component e @Order
+ * e os imports necessários
+ */
+// @Component
+// @Order(2)
 public class PasswordTest implements CommandLineRunner {
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    // @Autowired
+    // private PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
+        // Código de teste desabilitado para produção
+        // Descomente apenas em ambiente de desenvolvimento se necessário
+        /*
         String senhaTexto = "admin123";
         String senhaHash = passwordEncoder.encode(senhaTexto);
         
@@ -23,5 +29,6 @@ public class PasswordTest implements CommandLineRunner {
         System.out.println("Senha hash gerada: " + senhaHash);
         System.out.println("Teste de validação: " + passwordEncoder.matches(senhaTexto, senhaHash));
         System.out.println("====================================\n");
+        */
     }
 }

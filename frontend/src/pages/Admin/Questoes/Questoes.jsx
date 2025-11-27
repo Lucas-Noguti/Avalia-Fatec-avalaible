@@ -42,13 +42,26 @@ const Questoes = () => {
   };
 
   const handleDeletar = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar esta questão?')) {
+    const questao = questoes.find(q => q.id === id);
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja deletar esta questão?\n\n` +
+      `Matéria: ${questao?.materia}\n` +
+      `Enunciado: ${questao?.enunciado?.substring(0, 60)}...\n\n` +
+      `Esta ação não pode ser desfeita.`
+    );
+    
+    if (confirmacao) {
       try {
         await api.delete(`/admin/questoes/${id}`);
+        alert('Questão deletada com sucesso!');
         carregarQuestoes();
       } catch (error) {
         console.error('Erro ao deletar questão:', error);
-        alert('Erro ao deletar questão');
+        const mensagem = error.response?.data?.message || 
+          error.response?.status === 409 || error.response?.status === 400 ? 
+          'Não é possível deletar esta questão pois ela está sendo usada em avaliações ativas.' :
+          `Erro ao deletar questão: ${error.response?.data || error.message}`;
+        alert(mensagem);
       }
     }
   };

@@ -33,9 +33,26 @@ const Professores = () => {
       setMaterias(materiasRes.data);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      mostrarAlerta('Erro ao carregar dados. Tente novamente.', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const mostrarAlerta = (mensagem, tipo = 'success') => {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `custom-alert alert-${tipo}`;
+    alertDiv.innerHTML = `
+      <i class="fas fa-${tipo === 'success' ? 'check-circle' : tipo === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+      <span>${mensagem}</span>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => alertDiv.classList.add('show'), 10);
+    setTimeout(() => {
+      alertDiv.classList.remove('show');
+      setTimeout(() => alertDiv.remove(), 300);
+    }, 3000);
   };
 
   const carregarProfessores = async () => {
@@ -87,27 +104,55 @@ const Professores = () => {
     e.preventDefault();
 
     try {
-      if (editando) {
-        await api.put(`/admin/professores/${editando}`, professor);
-      } else {
-        await api.post('/admin/professores', professor);
+      // Preparar dados para envio
+      const dadosProfessor = {
+        nome: professor.nome,
+        login: professor.login,
+        email: professor.email,
+        ativo: professor.ativo,
+        perfil: 'PROFESSOR'
+      };
+
+      // Adicionar senha apenas se foi preenchida
+      if (professor.senha && professor.senha.trim() !== '') {
+        dadosProfessor.senha = professor.senha;
       }
-      carregarProfessores();
+
+      if (editando) {
+        await api.put(`/admin/professores/${editando}`, dadosProfessor);
+        mostrarAlerta('Professor atualizado com sucesso!', 'success');
+      } else {
+        await api.post('/admin/professores', dadosProfessor);
+        mostrarAlerta('Professor criado com sucesso!', 'success');
+      }
+      carregarDados();
       fecharModal();
     } catch (error) {
       console.error('Erro ao salvar professor:', error);
-      alert('Erro ao salvar professor');
+      const mensagem = error.response?.data?.message || 'Erro ao salvar professor. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
   const handleDeletar = async (id) => {
-    if (window.confirm('Tem certeza que deseja deletar este professor?')) {
+    const professor = professores.find(p => p.id === id);
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja deletar o professor "${professor?.nome}"?\n\n` +
+      `Esta ação não pode ser desfeita.`
+    );
+    
+    if (confirmacao) {
       try {
         await api.delete(`/admin/professores/${id}`);
-        carregarProfessores();
+        mostrarAlerta('Professor deletado com sucesso!', 'success');
+        carregarDados();
       } catch (error) {
         console.error('Erro ao deletar professor:', error);
-        alert('Erro ao deletar professor');
+        const mensagem = error.response?.data?.message || 
+          error.response?.status === 409 ? 
+          'Não é possível deletar este professor pois ele possui questões ou avaliações associadas.' :
+          'Erro ao deletar professor. Tente novamente.';
+        mostrarAlerta(mensagem, 'error');
       }
     }
   };
@@ -125,20 +170,32 @@ const Professores = () => {
   const handleAssociarMateria = async (materiaId) => {
     try {
       await api.post(`/admin/materias/${materiaId}/professores/${professorAtual.id}`);
-      carregarProfessores();
+      mostrarAlerta('Matéria associada com sucesso!', 'success');
+      // Atualizar apenas o professor atual
+      const response = await api.get('/admin/professores');
+      setProfessores(response.data);
+      const professorAtualizado = response.data.find(p => p.id === professorAtual.id);
+      setProfessorAtual(professorAtualizado);
     } catch (error) {
       console.error('Erro ao associar matéria:', error);
-      alert('Erro ao associar matéria');
+      const mensagem = error.response?.data?.message || 'Erro ao associar matéria. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
   const handleDesassociarMateria = async (materiaId) => {
     try {
       await api.delete(`/admin/materias/${materiaId}/professores/${professorAtual.id}`);
-      carregarProfessores();
+      mostrarAlerta('Matéria desassociada com sucesso!', 'success');
+      // Atualizar apenas o professor atual
+      const response = await api.get('/admin/professores');
+      setProfessores(response.data);
+      const professorAtualizado = response.data.find(p => p.id === professorAtual.id);
+      setProfessorAtual(professorAtualizado);
     } catch (error) {
       console.error('Erro ao desassociar matéria:', error);
-      alert('Erro ao desassociar matéria');
+      const mensagem = error.response?.data?.message || 'Erro ao desassociar matéria. Tente novamente.';
+      mostrarAlerta(mensagem, 'error');
     }
   };
 
@@ -351,6 +408,16 @@ const Professores = () => {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="modal-actions">
+                <button 
+                  type="button" 
+                  className="btn btn-primary"
+                  onClick={fecharModalMaterias}
+                >
+                  <i className="fas fa-check"></i> Confirmar
+                </button>
               </div>
             </div>
           </div>

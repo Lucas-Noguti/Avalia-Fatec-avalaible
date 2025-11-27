@@ -1,13 +1,17 @@
 package br.com.flavalia.avalia.controller;
 
+import br.com.flavalia.avalia.dto.AvaliacaoRequest;
 import br.com.flavalia.avalia.dto.MateriaDTO;
 import br.com.flavalia.avalia.dto.ProfessorSimplificadoDTO;
 import br.com.flavalia.avalia.dto.QuestaoDTO;
 import br.com.flavalia.avalia.dto.UsuarioDTO;
+import br.com.flavalia.avalia.model.Avaliacao;
 import br.com.flavalia.avalia.model.Materia;
 import br.com.flavalia.avalia.model.Questao;
 import br.com.flavalia.avalia.model.Usuario;
+import br.com.flavalia.avalia.service.AvaliacaoService;
 import br.com.flavalia.avalia.service.MateriaService;
+import br.com.flavalia.avalia.service.PdfService;
 import br.com.flavalia.avalia.service.QuestaoService;
 import br.com.flavalia.avalia.service.UsuarioService;
 import jakarta.validation.Valid;
@@ -31,6 +35,12 @@ public class AdminController {
     
     @Autowired
     private MateriaService materiaService;
+    
+    @Autowired
+    private AvaliacaoService avaliacaoService;
+    
+    @Autowired
+    private PdfService pdfService;
     
     @GetMapping("/professores")
     public ResponseEntity<List<UsuarioDTO>> listarProfessores() {
@@ -182,6 +192,54 @@ public class AdminController {
         try {
             materiaService.desassociarProfessor(materiaId, professorId);
             return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    // ===== AVALIAÇÕES =====
+    
+    @GetMapping("/avaliacoes")
+    public ResponseEntity<List<Avaliacao>> listarAvaliacoes() {
+        return ResponseEntity.ok(avaliacaoService.listarTodas());
+    }
+    
+    @GetMapping("/avaliacoes/{id}")
+    public ResponseEntity<Avaliacao> buscarAvaliacao(@PathVariable Long id) {
+        try {
+            return ResponseEntity.ok(avaliacaoService.buscarPorId(id));
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+    
+    @PostMapping("/avaliacoes")
+    public ResponseEntity<Avaliacao> criarAvaliacao(@Valid @RequestBody AvaliacaoRequest request) {
+        try {
+            // Admin pode criar avaliação sem professorId
+            Avaliacao avaliacao = avaliacaoService.criarAvaliacao(request, null);
+            return ResponseEntity.status(HttpStatus.CREATED).body(avaliacao);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @DeleteMapping("/avaliacoes/{id}")
+    public ResponseEntity<Void> deletarAvaliacao(@PathVariable Long id) {
+        try {
+            avaliacaoService.deletarAvaliacao(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+    
+    @GetMapping("/avaliacoes/{id}/pdf")
+    public ResponseEntity<String> gerarPdfAvaliacao(@PathVariable Long id) {
+        try {
+            Avaliacao avaliacao = avaliacaoService.buscarPorId(id);
+            String pdfBase64 = pdfService.gerarPdfAvaliacao(avaliacao);
+            return ResponseEntity.ok(pdfBase64);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }

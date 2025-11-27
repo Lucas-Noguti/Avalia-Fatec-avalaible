@@ -226,7 +226,7 @@ select:focus {
 }
 
 .table tbody tr:hover {
-  background: var(--color-dark-surface);
+  background: #3a3a3a;
 }
 
 /* Container principal */
