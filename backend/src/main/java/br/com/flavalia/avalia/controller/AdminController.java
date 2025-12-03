@@ -235,11 +235,14 @@ public class AdminController {
     }
     
     @GetMapping("/avaliacoes/{id}/pdf")
-    public ResponseEntity<String> gerarPdfAvaliacao(@PathVariable Long id) {
+    public ResponseEntity<byte[]> gerarPdfAvaliacao(@PathVariable Long id) {
         try {
             Avaliacao avaliacao = avaliacaoService.buscarPorId(id);
-            String pdfBase64 = pdfService.gerarPdfAvaliacao(avaliacao);
-            return ResponseEntity.ok(pdfBase64);
+            byte[] pdfBytes = pdfService.gerarPdfAvaliacao(avaliacao);
+            return ResponseEntity.ok()
+                .header("Content-Type", "application/pdf")
+                .header("Content-Disposition", "attachment; filename=avaliacao_" + id + ".pdf")
+                .body(pdfBytes);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
         }
