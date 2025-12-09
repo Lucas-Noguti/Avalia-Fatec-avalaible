@@ -4,6 +4,13 @@ import axios from 'axios';
 // Em desenvolvimento, usa localhost
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
+
+// ADICIONE ESTAS 3 LINHAS AQUI:
+console.log('--- DEBUG DO FRONTEND ---');
+console.log('VITE_API_URL (Variável):', import.meta.env.VITE_API_URL);
+console.log('API_URL (Final usada):', API_URL);
+
+
 const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,
