@@ -1,4 +1,4 @@
-# 🎓 FLAVALIA - Sistema de Avaliações FATEC
+ # 🎓 FLAVALIA - Sistema de Avaliações FATEC
 
 Sistema completo para criação e gerenciamento de avaliações acadêmicas, desenvolvido para instituições de ensino.
 
